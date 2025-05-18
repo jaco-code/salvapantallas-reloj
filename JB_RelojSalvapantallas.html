@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Reloj España Preciso</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: black;
+      height: 100%;
+      font-family: sans-serif;
+      color: white;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    #clock-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transform-origin: center center;
+      transition: transform 0.3s ease;
+    }
+
+    @media (max-width: 1200px), (max-height: 900px) {
+      #clock-wrapper { transform: scale(0.9); }
+    }
+
+    @media (max-width: 900px), (max-height: 700px) {
+      #clock-wrapper { transform: scale(0.75); }
+    }
+
+    @media (max-width: 600px), (max-height: 500px) {
+      #clock-wrapper { transform: scale(0.6); }
+    }
+
+    @media (max-width: 400px), (max-height: 400px) {
+      #clock-wrapper { transform: scale(0.5); }
+    }
+
+    #digital-clock {
+      margin-top: 20px;
+      font-weight: normal;
+      letter-spacing: 5px;
+      font-family: Arial, Helvetica, sans-serif;
+      user-select: none;
+      color: rgb(118, 118, 118);
+      font-size: 50px;
+      text-align: center;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div id="clock-wrapper">
+    <div class="clock" id="clock">
+      <div id="hour" class="hand hour"></div>
+      <div id="minute" class="hand minute"></div>
+      <div id="second" class="hand second"></div>
+    </div>
+    <div id="digital-clock">00:00:00</div>
+  </div>
+
+  <script>
+    const SCALE = 2.75;
+    const BASE_SIZE = 300;
+    const SIZE = BASE_SIZE * SCALE;
+    const CENTER = SIZE / 2;
+    const RADIUS = CENTER - 10 * SCALE;
+
+    const style = document.createElement('style');
+    style.textContent = `
+      .clock {
+        width: ${SIZE}px;
+        height: ${SIZE}px;
+        border-radius: 50%;
+        position: relative;
+        background: black;
+        border: ${1 * SCALE}px solid rgba(82, 82, 82, 0.623);
+      }
+
+      .hand {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform-origin: 0% 50%;
+        transform: rotate(0deg);
+        border-radius: ${1 * SCALE}px;
+      }
+
+      .hour {
+        width: ${70 * SCALE}px;
+        height: ${1 * SCALE}px;
+        background: white;
+        margin-top: ${-1 * SCALE}px;
+      }
+
+      .minute {
+        width: ${100 * SCALE}px;
+        height: ${0.5 * SCALE}px;
+        background: white;
+        margin-top: ${-0.75 * SCALE}px;
+      }
+
+      .second {
+        width: ${130 * SCALE}px;
+        height: ${0.5 * SCALE}px;
+        background: red;
+        margin-top: ${-0.75 * SCALE}px;
+      }
+
+      .number {
+        position: absolute;
+        width: ${5 * SCALE}px;
+        height: ${5 * SCALE}px;
+        font-size: ${5 * SCALE}px;
+        line-height: ${5 * SCALE}px;
+        text-align: center;
+        transform: translate(-50%, -50%);
+        user-select: none;
+        color: rgb(118, 118, 118);
+      }
+
+      #digital-clock {
+        font-size: ${5 * SCALE}px;
+        margin-top: ${20 * SCALE}px;
+      }
+    `;
+    document.head.appendChild(style);
+
+    const clock = document.getElementById("clock");
+    for (let i = 1; i <= 12; i++) {
+      const angle = (i - 3) * (Math.PI * 2) / 12;
+      const x = CENTER + RADIUS * Math.cos(angle);
+      const y = CENTER + RADIUS * Math.sin(angle);
+
+      const num = document.createElement("div");
+      num.className = "number";
+      num.style.left = `${x}px`;
+      num.style.top = `${y}px`;
+      num.textContent = i;
+      clock.appendChild(num);
+    }
+
+    const digitalClock = document.getElementById('digital-clock');
+
+    function getMadridTime() {
+      const now = new Date();
+      const options = { timeZone: 'Europe/Madrid', hour12: false };
+      const parts = new Intl.DateTimeFormat('es-ES', {
+        ...options,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      }).formatToParts(now);
+
+      const time = {};
+      for (const part of parts) {
+        if (part.type !== 'literal') {
+          time[part.type] = parseInt(part.value);
+        }
+      }
+      time.millisecond = now.getMilliseconds();
+      return time;
+    }
+
+    function updateClock() {
+      const { hour, minute, second, millisecond } = getMadridTime();
+
+      const hours = (hour % 12) + minute / 60 + second / 3600;
+      const minutes = minute + second / 60;
+      const seconds = second + millisecond / 1000;
+
+      document.getElementById('hour').style.transform = `rotate(${hours * 30 - 90}deg)`;
+      document.getElementById('minute').style.transform = `rotate(${minutes * 6 - 90}deg)`;
+      document.getElementById('second').style.transform = `rotate(${seconds * 6 - 90}deg)`;
+
+      digitalClock.textContent =
+        String(hour).padStart(2, '0') + ':' +
+        String(minute).padStart(2, '0') + ':' +
+        String(second).padStart(2, '0');
+
+      requestAnimationFrame(updateClock);
+    }
+
+    updateClock();
+  </script>
+</body>
+</html>
